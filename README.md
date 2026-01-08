@@ -95,7 +95,7 @@ longformer-large-4096  0.7022  0.7693  0.8669 0.3660 0.3570 0.4201
   
 **7. SHAP.py**
     This file illustrate the feature importance.  
-    * If the environment is wrong, try to run 'SHAP.py' to repair.  
+    * If the environment is wrong, try to run 'SHAP_env.py' to repair.  
 
   
 ==========================================  
