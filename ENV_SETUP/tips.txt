@@ -1,0 +1,3 @@
+Download the cuda version of pytorch;
+Or download the whl files of cuda version,
+and then install them.

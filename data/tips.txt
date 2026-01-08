@@ -1,0 +1,2 @@
+Please down load full candidate data from the LeCaRD GitHub project:
+https://github.com/myx666/LeCaRD

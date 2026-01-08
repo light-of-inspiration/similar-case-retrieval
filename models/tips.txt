@@ -1,0 +1,9 @@
+Please download models here:
+lawformer()
+bert-base-chinse
+roberta-zh-pytorch
+longformer-base-4096
+longformer-large-4096
+
+If you wand to try criminal Features exrtaction,
+download Qwen-1.5B-7B gguf model, reset the path.
