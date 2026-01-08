@@ -105,8 +105,10 @@ Python 3.10.19
 
 (acc) >conda list
 ```
+
 packages in environment at E:\Data\Anaconda3\envs\acc:  
-**Name                    Version                   Build  Channel**  
+```
+Name                    Version                   Build  Channel
 accelerate                1.11.0                   pypi_0    pypi  
 aiohappyeyeballs          2.6.1                    pypi_0    pypi  
 aiohttp                   3.13.2                   pypi_0    pypi  
@@ -202,4 +204,4 @@ xxhash                    3.6.0                    pypi_0    pypi
 xz                        5.6.4                h4754444_1    defaults  
 yarl                      1.22.0                   pypi_0    pypi   
 zlib                      1.3.1                h02ab6af_0    defaults  
-
+```
