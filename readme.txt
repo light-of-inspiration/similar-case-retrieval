@@ -84,7 +84,7 @@ longformer-large-4096  0.7022  0.7693  0.8669 0.3660 0.3570 0.4201
 
 7. SHAP.py
     This file illustrate the feature importance.
-    * If the environment is wrong, try to run 'SHAP.py' to repair.
+    * If the environment is wrong, try to run 'SHAP_env.py' to repair.
 
 
 ==========================================
@@ -193,4 +193,5 @@ xxhash                    3.6.0                    pypi_0    pypi
 xz                        5.6.4                h4754444_1    defaults
 yarl                      1.22.0                   pypi_0    pypi
 zlib                      1.3.1                h02ab6af_0    defaults
+
 
