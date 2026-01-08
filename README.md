@@ -81,6 +81,7 @@ Here is introductions for main python files:
     * Please check the path of 'data' folder and the sub 'prediction/2-Model' folder  
     * The given results in the folder can be visualized like this:  
 
+```
                 Model NDCG@10 NDCG@20 NDCG@30    P@5   P@10    MAP  
               BERT_ms  0.7210  0.7784  0.8764 0.3800 0.3790 0.4369  
               BERT_xs  0.7103  0.7764  0.8706 0.3700 0.3720 0.4271  
@@ -90,7 +91,7 @@ Here is introductions for main python files:
             lawformer  0.8807  0.9074  0.9499 0.6120 0.5370 0.7393  
  longformer-base-4096  0.7169  0.7807  0.8763 0.3740 0.3670 0.4220  
 longformer-large-4096  0.7022  0.7693  0.8669 0.3660 0.3570 0.4201  
-
+```
 
 **7. SHAP.py**
     This file illustrate the feature importance.  
