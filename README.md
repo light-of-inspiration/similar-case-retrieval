@@ -5,7 +5,8 @@ Similar case retrieval (SCR) task is a specific text-classification task especia
 This project realised a lawformer-based method with Semantic Keyword Representaion (SKR) module that exceeding the baseline of BM25, TF-IDF and BERT.  
 
 The experiment is based on the comparsion of performance with the LeCaRD dataset.  
-
+  
+  
 ## Project: Similar Case Retrieval Method based on the Pre-trained Model  
 Author: W. LIN  
 
@@ -16,6 +17,7 @@ Author: W. LIN
     (iii) label: golden_labels.json (shows relevant cids); label_top30_dict_json (show top-30 most similar cases' id and the degree from 0-3)   
     (iv) prediction (test_prediction): the work (test) prediction output path, where the visualize.py get the data sources.  
     (v) others: contains stopword.txt, etc.  
+    
 **(B) models:** local models like (please re-download them here):  
     (i)   lawformer (https://huggingface.co/thunlp/Lawformer)  
     (ii)  bert-base-chinese  
@@ -94,8 +96,8 @@ longformer-large-4096  0.7022  0.7693  0.8669 0.3660 0.3570 0.4201
     This file illustrate the feature importance.  
     * If the environment is wrong, try to run 'SHAP.py' to repair.  
 
-
-==========================================
+  
+==========================================  
 **II. Environment settings of the author:**
 (The requirements.txt etc are provided)  
 
@@ -105,7 +107,7 @@ Python 3.10.19
 
 (acc) >conda list
 ```
-
+  
 packages in environment at E:\Data\Anaconda3\envs\acc:  
 ```
 Name                    Version                   Build  Channel
