@@ -5,11 +5,7 @@ import numpy as np
 from typing import Dict, List, Any, Tuple
 import pandas as pd
 
-isTestVisualize=True
-if isTestVisualize:
-    pred_folder = 'test_prediction'
-else:
-    pred_folder = 'prediction'
+from processing import *
 
 class LegalRetrievalEvaluator:
     def __init__(self, base_path: str):
@@ -326,23 +322,34 @@ def main_evaluation(base_path, pred_folder, showKappa = False):
         print(f"\nFleiss Kappa: {kappa_score:.4f}")
 
 
-if __name__ == "__main__":
-    base_path = os.path.join(os.getcwd(),'data')
-    # main_evaluation(base_path, pred_folder = 'prediction') # reproduction
 
-    main_evaluation(base_path, pred_folder = 'test_prediction')      # experiment
+# --- mode config ---
+isVisualAll = False
+# isVisualAll = True
 
+# --- config ---
+pid = 1 # 1-Sim
+# pid = 2 # 2-Model
+# pid = 3 # 3-Text
 
-    # # 创建评估器
-    # evaluator = LegalRetrievalEvaluator(base_path)
-    #
-    # # 评估所有指标
-    # # results = evaluator.evaluate_all_metrics(pred_folder='prediction', query_set='all')
-    # results = evaluator.evaluate_all_metrics(pred_folder='Oct25', query_set='all')
-    #
-    # # 打印比较表格
-    # evaluator.print_comparison_table(results)
-    #
-    # # 可选：单独评估Kappa
-    # # kappa_score = evaluator.evaluate_kappa()
-    # # print(f"\nFleiss Kappa: {kappa_score:.4f}")
+def visualConfig(isVisualAll = False, pid = 1):
+    pred_mode = [
+        '1-Sim',
+        '2-Model',
+        '3-Text'
+    ]
+
+    # --- visualizing ---
+    if isVisualAll:
+        for mode in pred_mode:
+            print(f'\nMODE： {mode}')
+            pred_folder = os.path.join('prediction', mode)
+            main_evaluation(data_path, pred_folder)
+    else:
+        # --- exec ---
+        pid -= 1
+        pred_folder = os.path.join('prediction', pred_mode[pid])
+        print(f'\nMODE： {pred_mode[pid]}')
+        main_evaluation(data_path, pred_folder)
+
+visualConfig(isVisualAll, pid)

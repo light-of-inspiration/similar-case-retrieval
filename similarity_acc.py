@@ -1,5 +1,6 @@
 from processing import *
 from similarity import *
+from visualize import *
 
 from rank_bm25 import BM25Okapi
 import json
@@ -12,6 +13,73 @@ import numpy as np
 
 models = {}
 DEVICE = None
+
+# --- get concatenated text ---
+def getConcText(dict, key_list,isShowLen=False):
+    conc_text = ""
+    for attr in key_list:
+        if attr in dict.keys():
+            conc_text = conc_text + str(dict[attr])
+    if isShowLen:
+        print(f'\n\nconc_text： {len(conc_text)}\n\n')
+    return conc_text
+
+# --- Exp setup ---
+isAddSKR, isAddCrime, isAddFull, \
+isFullText, isFourTier, isFourTierOnly, \
+isSelectModel \
+\
+= False, False, False, \
+  False, False, False, \
+  False
+
+# isAddSKR = True
+# isAddCrime = True
+# isAddFull = True
+# isFullText = True
+# isFourTier = True
+isFourTierOnly = True
+
+# --- set parameters ---
+global signal
+signal = ""
+key_q_list = ['q']
+key_c_list = ['ajjbqk']
+
+if isAddSKR:
+    print(f'\nisAddSCR: {isAddSKR}\n')
+    signal = 'SKR'
+    key_q_list = ['crime', 'q', 'des']
+    key_c_list = ['crime', 'ajjbqk']
+elif isAddCrime: #Simplified
+    print(f'\nisAddCrime: {isAddCrime}\n')
+    signal = 'Simplified'
+    key_q_list = ['q', 'crime']
+    key_c_list = ['ajjbqk', 'crime']
+elif isAddFull:
+    print(f'\nisAddFull: {isAddFull}\n')
+    signal = 'Full'
+    key_q_list = ['crime', 'q', 'des']
+    key_c_list = ['crime', 'ajjbqk','cpfxgc','pjjg']
+elif isFullText:
+    print(f'\nisFullText: {isFullText}\n')
+    signal = 'SimpleFullText'
+    key_q_list = ['crime', 'q', 'des']
+    key_c_list = ['qw']
+elif isFourTier:
+    print(f'\nisFourTier: {isFourTier}\n')
+    signal = 'FourTier'
+    key_q_list = ['crime', 'q', 'des']
+    key_c_list = ['crime', 'ajjbqk', 'des']
+elif isFourTierOnly:
+    print(f'\nisFourTierOnly: {isFourTierOnly}\n')
+    signal = 'FourTierOnly'
+    key_q_list = ['crime', 'des']
+    key_c_list = ['crime', 'des']
+else:
+    pass
+
+# --- similarity accelerated ---
 
 def setup_device():
     """set GPU"""
@@ -348,7 +416,9 @@ def getCandidatesSim_multimodel(sim_model, ridx):
         load_model(model_type)
 
     # 获取query文本和嵌入 | get query text and embeddings
-    query_text = getCorpus(getQueryDict(ridx)['q'])
+    qt= getQueryDict(ridx)
+    qt_text = getConcText(qt, key_q_list)
+    query_text = getCorpus(qt_text)
     query_embedding = None
 
     if sim_model.__name__ in ['sim_bert', 'sim_longformer', 'sim_roberta', 'sim_lawformer']:
@@ -360,7 +430,8 @@ def getCandidatesSim_multimodel(sim_model, ridx):
     for i, cid in enumerate(all_cids):
         try:
             candidate_dict = getCandidateDict(ridx, cid)
-            corpus2 = getCorpus(candidate_dict['ajjbqk'])
+            c_text = getConcText(candidate_dict, key_c_list)
+            corpus2 = getCorpus(c_text)
             print(f"cid: {cid}, len(corpus2): {len(corpus2)}")
 
             if sim_model.__name__ in ['sim_bert', 'sim_longformer', 'sim_roberta', 'sim_lawformer']:
@@ -419,7 +490,7 @@ def getAllPred_multimodel(sim_model):
         except Exception as e:
             print(f"Errors when processing (ridx={ridx}): {e}")
 
-    dump_json(all_pred, sim_model)
+    dump_json(all_pred, sim_model,signal)
     return all_pred
 
 
@@ -430,9 +501,9 @@ def run_specific_model(model_type="bert"):
         sim_model, model_name = sim_longformer, "Longformer"
     elif model_type == "roberta":
         sim_model, model_name = sim_roberta, "RoBERTa"
-        if not isKaggle and not os.path.exists(os.path.join(os.getcwd(), 'models', 'chinese-roberta-wwm-ext')):
-            print("× Error | non-exist local model RoBERTa.")
-            exit(1)
+        # if not isKaggle and not os.path.exists(os.path.join(os.getcwd(), 'models', 'chinese-roberta-wwm-ext')):
+        #     print("× Error | non-exist local model RoBERTa.")
+        #     exit(1)
     elif model_type == "lawformer":
         sim_model, model_name = sim_lawformer, "Lawformer"
     else:
@@ -534,7 +605,7 @@ def getAllPred(sim_model):
             except Exception as e:
                 print(f"Errors with processing (ridx={futures[future][1]}): {str(e)}.")
 
-    dump_json(all_pred, sim_model)
+    dump_json(all_pred, sim_model,signal)
     return all_pred
 
 def getCandidatesSim(sim_model, ridx):
@@ -565,20 +636,24 @@ def getAllPred(sim_model):
     all_pred = {}
     for ridx in all_ridx:
         all_pred[ridx] = getCandidatesSim(sim_model, ridx)
-    dump_json(all_pred,sim_model)
+    dump_json(all_pred,sim_model,signal)
 
-def dump_json(results,sim_model):
+def dump_json(results,sim_model,signal):
     # results.sort(key=lambda x: x[1], reverse=True)
-    json_path = os.path.join(output_path, f'{sim_model.__name__}.json')
+    if not signal=='':
+        signal = f'_{signal}'
+    json_path = os.path.join(output_path, '1-Sim', f'{sim_model.__name__}{signal}.json')
     with open(json_path, 'w') as f:
         json.dump(results, f)
         print(f'dump json: {json_path}')
 
 # TF-IDF, BM25 with multi-thread
 if __name__ == "__main__":
-    sid = 2 # select similarity function
-    sim_models = [sim_jaccard, sim_cosine, sim_tfidf, sim_bm25, sim_seq, sim_COMP]
-    getAllPred(sim_models[sid])
+    print(f'signal: {signal}')
+    sid = 1 # select similarity function
+    sim_models = [sim_tfidf, sim_bm25] # [sim_jaccard, sim_cosine, sim_tfidf, sim_bm25, sim_seq, sim_COMP]
+    getAllPred(sim_models[sid-1])
+    visualConfig(isVisualAll=False, pid=1)
 
 
 # BERT

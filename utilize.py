@@ -11,9 +11,127 @@ from transformers import (
     EarlyStoppingCallback
 )
 from sklearn.metrics import accuracy_score, f1_score
-from processing import *
 import random
 from collections import defaultdict
+
+from processing import *
+from visualize import *
+
+# isAddSKR, isAddCrime, isAddFull, \
+# isFullText, isFourTier, isFourTierOnly, \
+# isSelectModel \
+# \
+# = False, False, False, \
+#   False, False, False, \
+#   False
+#
+# # --- mode switch ---
+# isSelectModel = True
+#
+# # isAddSKR = True
+# # isAddCrime = True
+# # isAddFull = True
+# # isFullText = True
+# isFourTier = True
+# # isFourTierOnly = True
+#
+# # --- set parameters ---
+# signal = "Retry"
+# key_q_list = ['q']
+# key_c_list = ['ajjbqk']
+#
+# # def setMode(isAddSKR=False,
+# #             isAddCrime=False,
+# #             isAddFull=False,
+# #             isFullText=False,
+# #             isFourTier=False,
+# #             isFourTierOnly=False,
+# #             isSelectModel=True
+# #             ):
+#
+# if isAddSKR:
+#     print(f'\nisAddSCR: {isAddSKR}\n')
+#     signal = 'SKR_'
+#     key_q_list = ['crime', 'q', 'des']
+#     key_c_list = ['crime', 'ajjbqk']
+# elif isAddCrime: #Simplified
+#     print(f'\nisAddCrime: {isAddCrime}\n')
+#     signal = 'Simplified_'
+#     key_q_list = ['q', 'crime']
+#     key_c_list = ['ajjbqk', 'crime']
+# elif isAddFull:
+#     print(f'\nisAddFull: {isAddFull}\n')
+#     signal = 'Full_'
+#     key_q_list = ['crime', 'q', 'des']
+#     key_c_list = ['crime', 'ajjbqk','cpfxgc','pjjg']
+# elif isFullText:
+#     print(f'\nisFullText: {isFullText}\n')
+#     signal = 'SimpleFullText_'
+#     key_q_list = ['crime', 'q', 'des']
+#     key_c_list = ['qw']
+# elif isFourTier:
+#     print(f'\nisFourTier: {isFourTier}\n')
+#     signal = 'FourTier_'
+#     key_q_list = ['crime', 'q', 'des']
+#     key_c_list = ['crime', 'ajjbqk', 'des']
+# elif isFourTierOnly:
+#     print(f'\nisFourTierOnly: {isFourTierOnly}\n')
+#     signal = 'FourTierOnly_'
+#     key_q_list = ['crime', 'des']
+#     key_c_list = ['crime', 'des']
+# else:
+#     pass
+#
+# # --- output path ---
+# models_for_selection = ['lawformer',
+#                        'bert-base-chinese',
+#                        'LegalBERT/xs',
+#                        'LegalBERT/ms',
+#                         'RoBERTa',
+#                        'longformer-base-4096',
+#                        'longformer-large-4096'
+#                        ]
+#
+# if not isSelectModel:
+#     comparison = '3-Text'
+#     selec = 0 # lawformer
+#
+# else:
+#     comparison = '3-Text' # '2-Model'
+#     selec = 1 # bert-base-chinese
+#     # selec = 2 # xs-bert
+#     # selec = 3 # ms-bert
+#     # selec = 4 # RoBERTa
+#     # selec = 5 # long-base
+#     # selec = 6 # long-large
+#     # print(f'models_for_selction： {models_for_selction}')
+#     # selc = int(input('Input select number:'))
+#
+#
+# selected_model = models_for_selection[selec]#'lawformer' # default
+#
+# if '/xs' in selected_model:
+#     mode_name = 'xs_'
+# elif'/ms' in selected_model:
+#     mode_name = 'ms_'
+# else:
+#     mode_name = selected_model + '_'
+# print(f'\nselected_model: {selected_model}\n')
+#
+# output_dir = f'./log/{mode_name}{signal}_results'
+# model_save_path = f'./log/{mode_name}{signal}_model'
+# validation_path = f'./log/{mode_name}{signal}_results/evaluation_results.json'
+# output_file = os.path.join(output_path,f'{comparison}', f'{mode_name}{signal}.json')
+#
+# for path in [output_dir, model_save_path, validation_path, output_file]:
+#     os.makedirs(os.path.dirname(path), exist_ok=True)
+#
+def getConcText(dict, key_list):
+    conc_text = ""
+    for attr in key_list:
+        if attr in dict.keys():
+            conc_text = conc_text + str(dict[attr])
+    return conc_text
 
 
 class LawMatchingDataset(Dataset):
@@ -28,7 +146,27 @@ class LawMatchingDataset(Dataset):
 
     def _build_samples(self):
         for ridx in self.ridx_list:
-            query_text = getQueryDict(ridx)['q']
+
+            # --- get query text --
+            qr = getQueryDict(ridx)
+            query_text = getConcText(qr, key_q_list) # qr['q']
+
+            # # === add SCR Feature ===
+            # if isAddSCR or isAddFull or isFullText:
+            #     try:
+            #         query_text = str(qr['crime']) + str(qr['q']) + str(qr['des'])
+            #     except:
+            #         query_text = str(qr['crime']) + str(qr['q'])
+            #
+            # # --- only add crime ---
+            # elif isAddCrime:
+            #     try:
+            #         query_text = str(qr['crime']) + str(qr['q'])
+            #     except:
+            #         query_text = str(qr['crime']) + str(qr['q'])
+            # else:
+            #     pass
+
             all_cids = get_all_cid(ridx)
 
             if self.mode == 'train':
@@ -36,8 +174,25 @@ class LawMatchingDataset(Dataset):
                 golden_cids = golden_json.get(str(ridx), [])
 
                 for cid, similarity_level in top30_data.items():
+
+                    # === get candidate text ===
                     cid = int(cid)
-                    candidate_text = getCandidateDict(ridx, cid)['ajjbqk']
+                    cd = getCandidateDict(ridx, cid)
+                    candidate_text = getConcText(cd, key_c_list) #cd['ajjbqk']
+                    # try:
+                    #     if '以' not in cd['crime']:
+                    #         if isAddSCR:
+                    #             candidate_text = str(cd['crime']) + str(cd['ajjbqk'])
+                    #         elif isAddCrime:
+                    #             candidate_text = str(cd['ajjbqk']) + str(cd['crime'])
+                    #         elif isAddFull:
+                    #             candidate_text = str(cd['crime']) + str(cd['ajjbqk'])  + str(cd['pjjg'])
+                    #         elif isFullText:
+                    #             candidate_text = cd['qw']
+                    #         else:
+                    #             pass
+                    # except Exception as e:
+                    #     print(f'(cid={cid}, ridx={ridx}){e}')
 
                     # construct：query + candidate -> similarity degree
                     self.samples.append({
@@ -56,7 +211,31 @@ class LawMatchingDataset(Dataset):
                     negative_cids = random.sample(non_top30_cids, num_negative)
 
                     for cid in negative_cids:
-                        candidate_text = getCandidateDict(ridx, cid)['ajjbqk']
+
+                        # === get candidate text ===
+                        cd = getCandidateDict(ridx, cid)
+                        candidate_text = getConcText(cd, key_c_list) #cd['ajjbqk']
+                        # try:
+                        #     if '以' not in cd['crime']:
+                        #         if isAddSCR:
+                        #             candidate_text = str(cd['crime']) + str(cd['ajjbqk'])
+                        #         elif isAddCrime:
+                        #             candidate_text = str(cd['ajjbqk']) + str(cd['crime'])
+                        #         elif isAddFull:
+                        #             candidate_text = str(cd['crime']) + str(cd['ajName']) + \
+                        #                              str(cd['ajjbqk'])  + \
+                        #                              str(cd['writName']) + str(cd['pjjg'])
+                        #         elif isFullText:
+                        #             candidate_text = cd['qw']
+                        #         else:
+                        #             pass
+                        # except Exception as e:
+                        #     print(f'(cid={cid}, ridx={ridx}){e}')
+                        #     # dict_keys(['ajId', 'ajName', 'ajjbqk', 'cpfxgc', 'pjjg', 'qw', 'writId', 'writName', 'cid'])
+                        #     if isAddFull:
+                        #         candidate_text = str(cd['ajName']) + \
+                        #                          str(cd['ajjbqk'])  + \
+                        #                          str(cd['writName']) + str(cd['pjjg'])
                         self.samples.append({
                             'ridx': ridx,
                             'cid': cid,
@@ -68,7 +247,38 @@ class LawMatchingDataset(Dataset):
 
             else: # ference
                 for cid in all_cids:
-                    candidate_text = getCandidateDict(ridx, cid)['ajjbqk']
+                    # === get candidate text ===
+                    cd = getCandidateDict(ridx, cid)
+                    candidate_text = getConcText(cd, key_c_list) # cd['ajjbqk']
+                    # try:
+                    #     try_get_crime = ""
+                    #     # try_get_cpfxgc = ""
+                    #
+                    #     if 'crime' in cd.keys():
+                    #         try_get_crime = cd['crime']
+                    #     # if 'cpfxgc' in cd.keys():
+                    #     #     try_get_cpfxgc = cd['cpfxgc']
+                    #
+                    #     if '以' not in try_get_crime:
+                    #         if isAddSCR:
+                    #             candidate_text = str(try_get_crime) + str(cd['ajjbqk'])
+                    #         elif isAddCrime:
+                    #             candidate_text = str(cd['ajjbqk']) + str(try_get_crime)
+                    #         elif isAddFull:
+                    #             candidate_text = str(try_get_crime) + str(cd['ajName']) + \
+                    #                              str(cd['ajjbqk'])  + \
+                    #                              str(cd['writName']) + str(cd['pjjg'])
+                    #         elif isFullText:
+                    #             candidate_text = cd['qw']
+                    #         else:
+                    #             pass
+                    # except Exception as e:
+                    #     print(f'(cid={cid}, ridx={ridx}){e}')
+                    #     # dict_keys(['ajId', 'ajName', 'ajjbqk', 'cpfxgc', 'pjjg', 'qw', 'writId', 'writName', 'cid'])
+                    #     if isAddFull:
+                    #         candidate_text = str(cd['ajName']) + \
+                    #                          str(cd['ajjbqk'])  \
+                    #                         #str(cd['pjjg']) #str(cd['cpfxgc']) str(cd['writName']) +
                     self.samples.append({
                         'ridx': ridx,
                         'cid': cid,
@@ -126,10 +336,10 @@ def compute_metrics(eval_pred):
 
 
 def train_lawformer_matching():
-    print("Start to train_lawformer_matching...")
+    # print("Start to train_lawformer_matching...")
 
     # load the tokenizer
-    model_name = "lawformer"
+    model_name = selected_model # "lawformer"
     input_model_path = os.path.join(os.getcwd(), 'models', model_name)
     tokenizer = BertTokenizer.from_pretrained(input_model_path)
 
@@ -183,9 +393,9 @@ def train_lawformer_matching():
 
     model.to(device)
 
-    # set training parameters
+    # --- set training parameters ---
     training_args = TrainingArguments(
-        output_dir='./lawformer_matching_results',
+        output_dir = output_dir,
         num_train_epochs=10,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
@@ -194,7 +404,8 @@ def train_lawformer_matching():
         weight_decay=0.01,
         logging_dir='./logs',
         logging_steps=50,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
+        # evaluation_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
         metric_for_best_model="f1_weighted",
@@ -218,8 +429,6 @@ def train_lawformer_matching():
     print("strart training...")
     train_result = trainer.train()
 
-    # save model
-    model_save_path = './lawformer_matching_model'
     trainer.save_model(model_save_path)
     tokenizer.save_pretrained(model_save_path)
 
@@ -232,8 +441,7 @@ def train_lawformer_matching():
     for key, value in eval_results.items():
         print(f"  {key}: {value:.4f}")
 
-    # save validation results
-    with open('./lawformer_matching_results/evaluation_results.json', 'w', encoding='utf-8') as f:
+    with open(validation_path, 'w', encoding='utf-8') as f:
         json.dump(eval_results, f, indent=2, ensure_ascii=False)
 
     return model_save_path
@@ -287,9 +495,6 @@ def predict_and_save(model_path):
         # save cid list
         final_predictions[ridx] = [candidate['cid'] for candidate in sorted_candidates]
 
-    # save results
-    output_file = os.path.join(output_path, 'lawformer_matching.json')
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(final_predictions, f, indent=2, ensure_ascii=False)
@@ -362,9 +567,103 @@ def test_lawformer(isTest=False):
     predict_and_save(model_path)
 
 
-if __name__ == "__main__":
-    # testing
-    # test_lawformer(True)
+# if __name__ == "__main__":
+#     # testing
+#     # test_lawformer(True)
+#
+#     # training
+#     test_lawformer(False)
+#     base_path = os.path.join(os.getcwd(), 'data')
+#     visualConfig(isVisualAll=False, pid=3)
 
-    # training
-    test_lawformer(False)
+# === All models ===
+comparison = '3-Text'
+models_for_selection = [
+                        # 'lawformer',
+                        # 'bert-base-chinese',
+                        'LegalBERT/xs',
+                        'LegalBERT/ms',
+                        'RoBERTa',
+                        'longformer-base-4096',
+                        'longformer-large-4096'
+                        ]
+
+modes_for_selection = [
+                        'Regular',
+                        'isAddSKR',
+                        'isAddCrime',
+                        'isAddFull',
+                        'isFullText',
+                        'isFourTier',
+                        'isFourTierOnly'
+                        ]
+
+def getModeSetup(mode):
+
+    if mode == 'isAddSKR':
+        signal = 'SKR_'
+        key_q_list = ['crime', 'q', 'des']
+        key_c_list = ['crime', 'ajjbqk']
+
+    elif mode == 'isAddCrime':
+        signal = 'Simplified_'
+        key_q_list = ['q', 'crime']
+        key_c_list = ['ajjbqk', 'crime']
+
+    elif mode == 'isAddFull':
+        signal = 'Full_'
+        key_q_list = ['crime', 'q', 'des']
+        key_c_list = ['crime', 'ajjbqk','cpfxgc','pjjg']
+
+    elif mode == 'isFullText':
+        signal = 'SimpleFullText_'
+        key_q_list = ['crime', 'q', 'des']
+        key_c_list = ['qw']
+
+    elif mode == 'isFourTier':
+        signal = 'FourTier_'
+        key_q_list = ['crime', 'q', 'des']
+        key_c_list = ['crime', 'ajjbqk', 'des']
+
+    elif mode == 'isFourTierOnly':
+        signal = 'FourTierOnly_'
+        key_q_list = ['crime', 'des']
+        key_c_list = ['crime', 'des']
+
+    else: # Regular
+        signal = 'Regular_'
+        key_q_list = ['q']
+        key_c_list = ['ajjbqk']
+
+    return signal, key_q_list, key_c_list
+
+# === ALL MODELS ====
+for model in models_for_selection:
+    selected_model = model
+    # --- path name ---
+    if '/xs' in selected_model:
+        mode_name = 'xs_'
+    elif '/ms' in selected_model:
+        mode_name = 'ms_'
+    else:
+        mode_name = selected_model + '_'
+    print(f'\nselected_model: {selected_model}\n')
+
+    # === ALL MODES ===
+    for mode in modes_for_selection:
+        print(f'\nmode:{mode}\n')
+        signal, key_q_list, key_c_list =getModeSetup(mode)
+
+        # --- paths ---
+        output_dir = f'./log/{mode_name}{signal}_results'
+        model_save_path = f'./log/{mode_name}{signal}_model'
+        validation_path = f'./log/{mode_name}{signal}_results/evaluation_results.json'
+        output_file = os.path.join(output_path, f'{comparison}', f'{mode_name}{signal}.json')
+
+        for path in [output_dir, model_save_path, validation_path, output_file]:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        # --- main ---
+        test_lawformer(False)
+
+visualConfig(isVisualAll=False, pid=3)

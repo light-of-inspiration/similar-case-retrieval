@@ -1,16 +1,22 @@
 Project: Similar Case Retrieval Method based on the Pre-trained Model
-Author: Weiyu LIN
+Author: W. LIN
 
 I. Code Structure
 (A) data: the LeCaRD dataset folder
     (i) query: query.json offer a dict with 107 queries.
-    (ii) candidates: each query with an ridx, has an according folder of candidates, named by cid.json
+    (ii) candidates: each query with an ridx, has an according folder of candidates, named by cid.json (please re-download the full version: https://github.com/myx666/LeCaRD)
     (iii) label: golden_labels.json (shows relevant cids); label_top30_dict_json (show top-30 most similar cases' id and the degree from 0-3)
     (iv) prediction (test_prediction): the work (test) prediction output path, where the visualize.py get the data sources.
     (v) others: contains stopword.txt, etc.
-(B) models: local models like:
-    (i) bert-base-chinese
-    (ii) lawformer
+(B) models: local models like (please re-download them here):
+    (i)   lawformer (https://huggingface.co/thunlp/Lawformer)
+    (ii)  bert-base-chinese
+    (iii) bert/xs (https://thunlp.oss-cn-qingdao.aliyuncs.com/bert/xs.zip)
+    (iv)  bert/ms (https://thunlp.oss-cn-qingdao.aliyuncs.com/bert/ms.zip)
+    (v)   RoBERTa_zh_L12_PyTorch
+    (vi)  longformer-base-4096
+    (vii) longformer-large-4096
+
     ...
 (C) python files:
 The CAIL contest has offered dataset, baseline.py (BM25), metrics.py, stopword.txt/
@@ -23,7 +29,7 @@ For comparison, I add different similarity function in similarity.py, and the mu
 To use lawformer, run the 'utilize.py' file with GPU acceleration.
 
 ==========================================
-Here is introductions for all python files:
+Here is introductions for main python files:
 
 1.processing.py
     The structured json processing functions, necessary almost for all other executor.
@@ -45,15 +51,45 @@ Here is introductions for all python files:
     The upper __main__ function can realise TF-IDF, BM25 results.
     The lower __main__ function can get BERT prediction.
 
-4.ultilize.py
+4. jurex_XXX.py
+    If you want to use the feature extraction, download models and reset the path:
+    (i)  qwen1.5-7b-chat-q4_k_m.gguf 
+    (ii) Qwen-7B-Chat.Q4_K_M.gguf
+    (iii)mistral-7b-instruct-v0.1.Q2_K.gguf
+    (iv) mistral-7b-instruct-v0.1.Q4_K_M.gguf
+    (iv) DeepSeek-R1-Distill-Qwen-7B-Uncensored.i1-Q4_K_S.gguf
+    The jurex_XXX.py code show how to test the extraction ability with this model.
+    We use ./JUREX/data/flattened_jurex4e.json to assist the extraction.
+    The extraction process is also in the processing.py
+
+5.ultilize.py
     This file realise the lawformer method. Detailed methodology is given in the thesis.
     * If the environment is wrong, try to run 'zero_env.py' to repair.
 
-5. visualize.py
+6. visualize.py
     Select a folder (test_)/prediction and to get all the json predictions for evaluation.
+    * Please check the path of 'data' folder and the sub 'prediction/2-Model' folder
+    * The given results in the folder can be visualized like this:
+
+                Model NDCG@10 NDCG@20 NDCG@30    P@5   P@10    MAP
+              BERT_ms  0.7210  0.7784  0.8764 0.3800 0.3790 0.4369
+              BERT_xs  0.7103  0.7764  0.8706 0.3700 0.3720 0.4271
+              RoBERTa  0.7255  0.7825  0.8769 0.3820 0.3860 0.4426
+    bert-base-chinese  0.7820  0.8372  0.9068 0.4180 0.4160 0.4851
+                 bm25  0.6766  0.7591  0.8659 0.3120 0.3010 0.3790
+            lawformer  0.8807  0.9074  0.9499 0.6120 0.5370 0.7393
+ longformer-base-4096  0.7169  0.7807  0.8763 0.3740 0.3670 0.4220
+longformer-large-4096  0.7022  0.7693  0.8669 0.3660 0.3570 0.4201
+
+
+7. SHAP.py
+    This file illustrate the feature importance.
+    * If the environment is wrong, try to run 'SHAP.py' to repair.
+
 
 ==========================================
 II. Environment settings of the author:
+(The requirements.txt etc are provided)
 
 (acc) E:\Py_Dev\IceBerg>python --version
 Python 3.10.19
